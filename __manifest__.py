@@ -19,7 +19,6 @@
     'depends': ['purchase', 'account', 'mail'],
     'data': [
         'security/ir.model.access.csv',
-        'data/payment_term_data.xml',
         'wizard/import_payment_wizard_views.xml',
         'views/import_payment_line_views.xml',
         'views/import_payment_report_views.xml',
