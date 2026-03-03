@@ -1,0 +1,63 @@
+.import_payment_dashboard {
+    background: #f8f9fa;
+    min-height: 100vh;
+}
+
+.import_payment_dashboard .card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.import_payment_dashboard .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+.import_payment_dashboard .nav-tabs .nav-link {
+    font-size: 0.85rem;
+    padding: 0.5rem 0.8rem;
+    color: #495057;
+    border: none;
+    border-bottom: 2px solid transparent;
+}
+
+.import_payment_dashboard .nav-tabs .nav-link.active {
+    color: #1a237e;
+    border-bottom: 2px solid #1a237e;
+    font-weight: 600;
+    background: transparent;
+}
+
+.import_payment_dashboard .nav-tabs .nav-link:hover:not(.active) {
+    border-bottom: 2px solid #90CAF9;
+    color: #1565C0;
+}
+
+.import_payment_dashboard .table thead th {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 0.5rem;
+    white-space: nowrap;
+}
+
+.import_payment_dashboard .table tbody td {
+    font-size: 0.82rem;
+    padding: 0.4rem 0.5rem;
+    vertical-align: middle;
+}
+
+.import_payment_dashboard .table-danger {
+    background-color: rgba(244, 67, 54, 0.08) !important;
+}
+
+.import_payment_dashboard .table-success {
+    background-color: rgba(76, 175, 80, 0.08) !important;
+}
+
+.import_payment_dashboard .table-warning {
+    background-color: rgba(255, 152, 0, 0.08) !important;
+}
+
+.import_payment_dashboard .badge {
+    font-size: 0.7rem;
+}

@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ── Form del reporte mensual ─────────────────────────────────── -->
+    <record id="view_import_payment_report_form" model="ir.ui.view">
+        <field name="name">import.payment.report.form</field>
+        <field name="model">import.payment.report</field>
+        <field name="arch" type="xml">
+            <form string="Reporte Mensual de Pagos">
+                <header>
+                    <button name="action_open" string="Activar" type="object"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_close" string="Cerrar Mes" type="object"
+                            class="btn-warning" invisible="state != 'open'"
+                            confirm="¿Cerrar este mes?"/>
+                    <button name="action_draft" string="Reabrir" type="object"
+                            class="btn-secondary" invisible="state != 'closed'"/>
+                    <button name="action_populate_from_purchases"
+                            string="📥 Importar desde OCs" type="object"
+                            class="btn-info" invisible="state == 'closed'"/>
+                    <button name="action_add_line"
+                            string="➕ Agregar Compromiso" type="object"
+                            class="btn-success" invisible="state == 'closed'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,open,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title mb-3">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group col="4">
+                        <field name="month"/>
+                        <field name="year"/>
+                        <field name="company_id" invisible="1"/>
+                    </group>
+
+                    <!-- Resumen -->
+                    <div class="oe_button_box mb-3" name="button_box">
+                        <button class="oe_stat_button" icon="fa-file-text-o">
+                            <field name="total_lines" widget="statinfo" string="Compromisos"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-check-circle">
+                            <field name="paid_lines" widget="statinfo" string="Pagados"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-clock-o">
+                            <field name="pending_lines" widget="statinfo" string="Pendientes"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-exclamation-triangle">
+                            <field name="overdue_lines" widget="statinfo" string="Vencidos"/>
+                        </button>
+                    </div>
+
+                    <group col="2">
+                        <group string="Totales USD">
+                            <field name="currency_usd_id" invisible="1"/>
+                            <field name="currency_mxn_id" invisible="1"/>
+                            <field name="total_credit_import_usd" string="Vencim. Crédito"/>
+                            <field name="total_freight_sea_usd" string="Fletes Marítimos"/>
+                            <field name="total_advance_usd" string="Anticipos"/>
+                            <field name="total_balance_usd" string="Balances"/>
+                            <field name="grand_total_usd" string="TOTAL USD" class="fw-bold"/>
+                        </group>
+                        <group string="Totales MXN">
+                            <field name="total_credit_import_mxn" string="Vencim. Crédito"/>
+                            <field name="total_freight_sea_mxn" string="Fletes Marítimos"/>
+                            <field name="total_freight_land_mxn" string="Fletes Terrestres"/>
+                            <field name="total_advance_mxn" string="Anticipos"/>
+                            <field name="total_balance_mxn" string="Balances"/>
+                            <field name="total_tax_mxn" string="Impuestos"/>
+                            <field name="grand_total_mxn" string="TOTAL MXN" class="fw-bold"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="📋 Todos los Compromisos" name="all">
+                            <field name="line_ids" nolabel="1">
+                                <list editable="bottom"
+                                      decoration-danger="state == 'overdue'"
+                                      decoration-success="state == 'paid'"
+                                      decoration-warning="alert_level == 'warning'">
+                                    <field name="commitment_category" string="Categoría"/>
+                                    <field name="partner_id" string="Proveedor"/>
+                                    <field name="name" string="Descripción" optional="show"/>
+                                    <field name="invoice_reference" string="Factura"/>
+                                    <field name="amount_original" string="Monto"/>
+                                    <field name="currency_id" string="Mon."/>
+                                    <field name="due_date" string="Vencimiento"/>
+                                    <field name="days_until_due" string="Días" readonly="1"/>
+                                    <field name="state" widget="badge" string="Estado"
+                                           decoration-success="state == 'paid'"
+                                           decoration-danger="state == 'overdue'"
+                                           decoration-warning="state == 'pending'"
+                                           decoration-info="state == 'partial'"/>
+                                    <field name="paid_date" string="F. Pago" optional="hide"/>
+                                    <field name="alert_level" column_invisible="1"/>
+                                    <button name="action_mark_paid" string="✓" type="object"
+                                            class="btn btn-sm btn-secondary"
+                                            invisible="state == 'paid'"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ── List ──────────────────────────────────────────────────────── -->
+    <record id="view_import_payment_report_list" model="ir.ui.view">
+        <field name="name">import.payment.report.list</field>
+        <field name="model">import.payment.report</field>
+        <field name="arch" type="xml">
+            <list string="Reportes Mensuales">
+                <field name="name"/>
+                <field name="total_lines" string="Compromisos"/>
+                <field name="paid_lines" string="Pagados"/>
+                <field name="overdue_lines" string="Vencidos"/>
+                <field name="grand_total_usd" string="Total USD"/>
+                <field name="grand_total_mxn" string="Total MXN"/>
+                <field name="currency_usd_id" column_invisible="1"/>
+                <field name="currency_mxn_id" column_invisible="1"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ── Acción para reportes mensuales ────────────────────────────── -->
+    <record id="action_import_payment_report" model="ir.actions.act_window">
+        <field name="name">Reportes Mensuales</field>
+        <field name="res_model">import.payment.report</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

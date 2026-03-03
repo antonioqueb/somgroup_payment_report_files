@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+<t t-name="somgroup_payment_terms.ImportPaymentDashboard">
+    <div class="o_action import_payment_dashboard">
+
+        <!-- ═══ HEADER ═══════════════════════════════════════════════════ -->
+        <div class="d-flex align-items-center justify-content-between px-4 py-3"
+             style="background: linear-gradient(135deg, #1a237e 0%, #283593 100%); color: white;">
+            <div>
+                <h2 class="mb-0 fw-bold">📊 Reporte de Pagos a Proveedores</h2>
+                <small class="opacity-75">SOMGROUP — Visor de Compras</small>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+                <!-- Selector de reporte -->
+                <select class="form-select form-select-sm" style="width: 220px;"
+                        t-on-change="onSelectReport">
+                    <option value="">Todos los compromisos</option>
+                    <t t-foreach="state.reports" t-as="r" t-key="r.id">
+                        <option t-att-value="r.id"
+                                t-att-selected="state.selectedReportId === r.id">
+                            <t t-esc="r.name"/>
+                        </option>
+                    </t>
+                </select>
+                <!-- Selector de mes -->
+                <select class="form-select form-select-sm" style="width: 180px;"
+                        t-on-change="onSelectMonth"
+                        t-if="monthKeys.length > 1">
+                    <t t-foreach="monthKeys" t-as="mk" t-key="mk">
+                        <option t-att-value="mk"
+                                t-att-selected="state.selectedMonth === mk">
+                            <t t-esc="state.months[mk].display"/>
+                        </option>
+                    </t>
+                </select>
+                <button class="btn btn-outline-light btn-sm" t-on-click="onRefresh"
+                        title="Actualizar">
+                    🔄
+                </button>
+                <button class="btn btn-outline-light btn-sm" t-on-click="onCreateReport"
+                        title="Crear Reporte">
+                    ➕ Nuevo
+                </button>
+            </div>
+        </div>
+
+        <!-- ═══ LOADING / ERROR ══════════════════════════════════════════ -->
+        <div t-if="state.loading" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"/>
+            <p class="mt-2 text-muted">Cargando datos...</p>
+        </div>
+
+        <div t-elif="state.error" class="alert alert-danger m-4">
+            <strong>Error:</strong> <t t-esc="state.error"/>
+        </div>
+
+        <div t-elif="!currentMonthData" class="text-center py-5 text-muted">
+            <h3>No hay compromisos registrados</h3>
+            <p>Crea un reporte mensual y agrega compromisos de pago.</p>
+            <button class="btn btn-primary" t-on-click="onCreateReport">
+                ➕ Crear Reporte Mensual
+            </button>
+        </div>
+
+        <!-- ═══ DASHBOARD CONTENT ════════════════════════════════════════ -->
+        <div t-else="" class="px-4 py-3">
+
+            <!-- ─── RESUMEN EJECUTIVO ────────────────────────────────── -->
+            <div class="mb-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h4 class="mb-0 fw-bold text-dark">
+                        <t t-esc="currentMonthData.display"/> — Resumen Ejecutivo
+                    </h4>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-secondary" t-on-click="onOpenAllLines">
+                            📋 Ver Todas las Líneas
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary" t-on-click="onOpenProjection">
+                            📅 Proyección Futura
+                        </button>
+                        <button t-if="state.selectedReportId"
+                                class="btn btn-sm btn-outline-dark" t-on-click="onOpenReport">
+                            📝 Abrir Reporte
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Counters -->
+                <div class="row g-3 mb-3">
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #4CAF50 !important;">
+                            <div class="card-body py-2 px-3">
+                                <div class="text-muted small">Total Compromisos</div>
+                                <div class="fs-3 fw-bold" t-esc="currentSummary.total || 0"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #4CAF50 !important;">
+                            <div class="card-body py-2 px-3">
+                                <div class="text-muted small">Pagados</div>
+                                <div class="fs-3 fw-bold text-success" t-esc="currentSummary.paid || 0"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #FF9800 !important;">
+                            <div class="card-body py-2 px-3">
+                                <div class="text-muted small">Pendientes</div>
+                                <div class="fs-3 fw-bold text-warning" t-esc="currentSummary.pending || 0"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #F44336 !important;">
+                            <div class="card-body py-2 px-3">
+                                <div class="text-muted small">Vencidos</div>
+                                <div class="fs-3 fw-bold text-danger" t-esc="currentSummary.overdue || 0"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary by category cards -->
+                <div class="row g-3 mb-3">
+                    <t t-foreach="summaryCards" t-as="card" t-key="card.label">
+                        <div class="col-md-4 col-lg-2">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body py-2 px-3 text-center">
+                                    <div class="small fw-bold mb-1"
+                                         t-attf-style="color: {{card.color}}">
+                                        <t t-esc="card.label"/>
+                                    </div>
+                                    <div t-if="card.usd" class="fw-bold small">
+                                        <t t-esc="formatUSD(card.usd)"/>
+                                    </div>
+                                    <div class="text-muted small">
+                                        <t t-esc="formatMXN(card.mxn)"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+
+                <!-- Grand Total -->
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card bg-primary text-white border-0 shadow">
+                            <div class="card-body py-3 text-center">
+                                <div class="small opacity-75">TOTAL USD</div>
+                                <div class="fs-4 fw-bold">
+                                    <t t-esc="formatUSD(currentSummary.total_usd)"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card text-white border-0 shadow"
+                             style="background: #1a237e;">
+                            <div class="card-body py-3 text-center">
+                                <div class="small opacity-75">TOTAL MXN</div>
+                                <div class="fs-4 fw-bold">
+                                    <t t-esc="formatMXN(currentSummary.total_mxn)"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ─── TABS POR CATEGORÍA ───────────────────────────────── -->
+            <div class="mb-4">
+                <ul class="nav nav-tabs">
+                    <t t-foreach="tabs" t-as="tab" t-key="tab.key">
+                        <li class="nav-item">
+                            <a class="nav-link"
+                               t-att-class="{'nav-link': true, 'active': state.activeTab === tab.key}"
+                               href="#"
+                               t-on-click.prevent="() => this.onClickTab(tab.key)">
+                                <t t-esc="tab.icon"/>
+                                <t t-esc="tab.label"/>
+                                <span t-if="tab.count"
+                                      class="badge bg-secondary ms-1">
+                                    <t t-esc="tab.count"/>
+                                </span>
+                            </a>
+                        </li>
+                    </t>
+                </ul>
+            </div>
+
+            <!-- ─── TABLA DE LÍNEAS ──────────────────────────────────── -->
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th t-if="state.activeTab === 'all'" style="width:140px">Categoría</th>
+                            <th>Proveedor</th>
+                            <th>Factura</th>
+                            <th class="text-end">Monto</th>
+                            <th>Mon.</th>
+                            <th>Vencimiento</th>
+                            <th class="text-center">Días</th>
+                            <th class="text-center">Estado</th>
+                            <th>Término</th>
+                            <th t-if="state.activeTab === 'import_tax'" class="text-end">Imp. MXN</th>
+                            <th t-if="state.activeTab === 'import_tax'">Est.</th>
+                            <th>ETA</th>
+                            <th class="text-center" style="width: 100px">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-if="filteredLines.length === 0">
+                            <tr>
+                                <td colspan="13" class="text-center text-muted py-4">
+                                    No hay compromisos en esta categoría
+                                </td>
+                            </tr>
+                        </t>
+                        <t t-foreach="filteredLines" t-as="line" t-key="line.id">
+                            <tr t-att-class="getRowClass(line)"
+                                style="cursor: pointer;"
+                                t-on-click="() => this.onOpenLine(line.id)">
+                                <td t-if="state.activeTab === 'all'">
+                                    <span class="badge"
+                                          t-attf-style="background: {{getCategoryConfig(line.commitment_category).color}}; font-size: 0.7em;">
+                                        <t t-esc="getCategoryConfig(line.commitment_category).icon"/>
+                                        <t t-esc="getCategoryConfig(line.commitment_category).label"/>
+                                    </span>
+                                </td>
+                                <td class="fw-semibold">
+                                    <t t-esc="line.partner_id ? line.partner_id[1] : '—'"/>
+                                </td>
+                                <td>
+                                    <t t-esc="line.invoice_reference || '—'"/>
+                                </td>
+                                <td class="text-end fw-bold">
+                                    <t t-esc="formatCurrency(line.amount_original,
+                                        line.currency_id ? line.currency_id[1] : 'USD')"/>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark">
+                                        <t t-esc="line.currency_id ? line.currency_id[1] : ''"/>
+                                    </span>
+                                </td>
+                                <td>
+                                    <t t-esc="formatDate(line.due_date)"/>
+                                </td>
+                                <td class="text-center">
+                                    <span t-att-class="{
+                                        'badge': true,
+                                        'bg-danger': line.days_until_due &lt; 0,
+                                        'bg-warning text-dark': line.days_until_due >= 0 &amp;&amp; line.days_until_due &lt;= 7,
+                                        'bg-info': line.days_until_due > 7 &amp;&amp; line.days_until_due &lt;= 15,
+                                        'bg-light text-dark': line.days_until_due > 15,
+                                        'bg-success': line.state === 'paid',
+                                    }">
+                                        <t t-if="line.state === 'paid'">✓</t>
+                                        <t t-else="" t-esc="line.days_until_due"/>
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <span t-att-class="'badge ' + getStateBadge(line.state).class">
+                                        <t t-esc="getStateBadge(line.state).label"/>
+                                    </span>
+                                </td>
+                                <td class="small text-muted">
+                                    <t t-esc="line.payment_term_type || ''"/>
+                                </td>
+                                <td t-if="state.activeTab === 'import_tax'" class="text-end fw-bold">
+                                    <t t-esc="formatMXN(line.tax_amount_mxn)"/>
+                                </td>
+                                <td t-if="state.activeTab === 'import_tax'">
+                                    <span t-if="line.tax_is_estimate"
+                                          class="badge bg-warning text-dark">Est.</span>
+                                    <span t-else="" class="badge bg-success">Real</span>
+                                </td>
+                                <td class="small">
+                                    <t t-esc="formatDate(line.eta_date)"/>
+                                </td>
+                                <td class="text-center" t-on-click.stop="">
+                                    <button t-if="line.state !== 'paid'"
+                                            class="btn btn-success btn-sm py-0 px-1"
+                                            t-on-click="() => this.onMarkPaid(line.id)"
+                                            title="Marcar Pagado">
+                                        ✓
+                                    </button>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</t>
+
+</templates>

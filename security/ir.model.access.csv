@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_import_payment_report_user,import.payment.report.user,model_import_payment_report,purchase.group_purchase_user,1,1,1,0
+access_import_payment_report_manager,import.payment.report.manager,model_import_payment_report,purchase.group_purchase_manager,1,1,1,1
+access_import_payment_line_user,import.payment.line.user,model_import_payment_line,purchase.group_purchase_user,1,1,1,0
+access_import_payment_line_manager,import.payment.line.manager,model_import_payment_line,purchase.group_purchase_manager,1,1,1,1
+access_import_payment_line_wizard_user,import.payment.line.wizard.user,model_import_payment_line_wizard,purchase.group_purchase_user,1,1,1,1
